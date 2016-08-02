@@ -26,7 +26,9 @@ class ViewHelper
   include ActionView::Helpers::DateHelper
 end
 
-
+get '/' do
+  "Nothing to see here"
+end
 post '/' do
   #text = params.fetch('text', )
   view_helper = ViewHelper.new
