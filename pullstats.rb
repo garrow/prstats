@@ -1,46 +1,48 @@
 #!/usr/bin/env ruby 
-
 require 'bundler'
 require 'octokit'
 require 'pry'
-
-
 require 'action_view'
 require 'dotenv'
 Dotenv.load
+
+Config = Struct.new(:api_token, :target_repo, :watch_label)
+
+CONFIG = Config.new(
+    ENV.fetch('GITHUB_API_TOKEN'),
+    ENV.fetch('GITHUB_TARGET_REPO'),
+    ENV.fetch('GITHUB_WATCH_LABEL', 'Review Requested')
+)
 
 puts "Run"
 
 
 Octokit.configure do |c|
-  c.access_token = ENV.fetch('GITHUB_API_TOKEN')
+  c.access_token = CONFIG.api_token
 end
 client =  Octokit::Client.new
 
-pull_requests = client.pull_requests(ENV.fetch('GITHUB_TARGET_REPO'))
+pull_requests = client.issues(CONFIG.target_repo)
 
+# pull_requests = client.pull_requests(ENV.fetch('GITHUB_TARGET_REPO'))
 
 
 number_of_pull_requests = pull_requests.count
-pull_request_ages = pull_requests.map { |p| Time.now - p[:created_at] }
+pull_request_creation_dates = pull_requests.map { |p| p[:created_at] }
+pull_request_ages = pull_request_creation_dates.map { |p| Time.now - p }
+label_counts = pull_requests.flat_map { |p|  p[:labels].collect {|l| l[:name] } }.group_by(&:to_s).map { |k,v| [k, v.size] }.to_h
 
-oldest_pr = pull_requests.min_by {|p| p[:created_at] }
-newest_pr = pull_requests.max_by {|p| p[:created_at] }
+oldest_age = pull_request_creation_dates.min
+newest_age = pull_request_creation_dates.max
 
-now_time = Time.now
-
-average_age = now_time - (pull_request_ages.reduce(&:+) / pull_request_ages.size)
-oldest_age = oldest_pr[:created_at]
-newest_age = newest_pr[:created_at]
-needing_attention_count = 999
-
-
+average_age = Time.now - (pull_request_ages.reduce(&:+) / pull_request_ages.size)
+needing_attention_count = label_counts.fetch(CONFIG.watch_label, 0)
 
 include ActionView::Helpers::DateHelper
 stats = <<-SCARY_STATS
 There are currently #{number_of_pull_requests} open pull requests.
+There are currently #{needing_attention_count} PRs with the "#{CONFIG.watch_label}" label.
 The average age of these PRs is #{time_ago_in_words(average_age)}.
-There are currently #{needing_attention_count} PRs with the "Reviewer Requested" label.
 The oldest is #{time_ago_in_words(oldest_age)} old.
 The newest is #{time_ago_in_words(newest_age)} old.
 SCARY_STATS
@@ -48,5 +50,5 @@ SCARY_STATS
 
 puts stats
 
-#binding.pry
+# binding.pry
 
