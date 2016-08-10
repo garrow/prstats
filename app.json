@@ -1,0 +1,21 @@
+{
+  "name": "PR Stats",
+  "description": "A Slack bot which tells you how your GH Pull requests",
+  "repository": "https://github.com/garrow/prstats",
+  "keywords": [
+    "slack",
+    "github",
+    "bot"
+  ],
+  "env": {
+    "GITHUB_API_TOKEN": {
+      "description": "The Authentication Token for the GitHub API."
+    },
+    "GITHUB_TARGET_REPO": {
+      "description": "The repository you want to watch. It needs to be in 'owner/repository' format e.g. garrow/prstats"
+    },
+    "GITHUB_WATCH_LABEL": {
+      "description": "A label which marks your outstanding pull requests, e.g. 'Needs Review'"
+    }
+  }
+}
