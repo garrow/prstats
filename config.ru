@@ -54,6 +54,11 @@ The oldest is #{view_helper.time_ago_in_words(oldest_age)} old.
 The newest is #{view_helper.time_ago_in_words(newest_age)} old.
   SCARY_STATS
   stats
+  content_type :json
+  {
+      response_type: "in_channel",
+      text:          stats
+  }.to_json
 end
 
 run Sinatra::Application
