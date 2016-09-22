@@ -66,9 +66,16 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
            end
 
     content_type :json
-    {
-        response_type: "in_channel",
-        text:          stats(repo)
-    }.to_json
+    if repo
+      {
+          response_type: "in_channel",
+          text:          stats(repo)
+      }.to_json
+    else
+      {
+          response_type: "ephemeral",
+          text:          params.map { |k,v| "#{k} = #{v}\n" }.join
+      }.to_json
+    end
   end
 end
