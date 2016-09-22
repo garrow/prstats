@@ -24,6 +24,8 @@ class StatsBot < Sinatra::Base
   end
 
   def stats(repo)
+    return "Error: No repository defined" unless repo
+
     client =  Octokit::Client.new
     #text = params.fetch('text', )
     view_helper = ViewHelper.new
