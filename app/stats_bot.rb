@@ -57,20 +57,13 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
     repo = if params[:channel_name]
              Repo.for_channel(params[:channel_name])
            end
-    repo ||= settings.repo
-
-    content_type :json
-    {
-        response_type: "in_channel",
-        text:          stats(repo)
-    }.to_json
+    stats(repo)
   end
 
   post '/' do
     repo = if params[:channel_name]
              Repo.for_channel(params[:channel_name])
            end
-    repo ||= settings.repo
 
     content_type :json
     {
