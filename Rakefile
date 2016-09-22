@@ -10,6 +10,8 @@ namespace :db do
     # db = Sequel.connect(ENV.fetch("DATABASE_URL"))
     DB.logger = Logger.new($stdout)
 
+    DB.logger = Logger.new($stdout)
+
     if args[:version]
       puts "Migrating to version #{args[:version]}"
       Sequel::Migrator.run(DB, "db/migrations", target: args[:version].to_i)

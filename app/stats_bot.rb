@@ -7,7 +7,7 @@ require 'json'
 require_relative '../lib/boot'
 
 Config = Struct.new(:api_token, :target_repo, :watch_label)
-
+Statistics = Struct.new(:open, :counts, :oldest, :newest, :average_age, :needy)
 
 class StatsBot < Sinatra::Base
   set :db, ::DB
@@ -24,7 +24,7 @@ class StatsBot < Sinatra::Base
     include ActionView::Helpers::DateHelper
   end
 
-  def stats(repo)
+  def stats(repo, type, name)
     return "Error: No repository defined" unless repo
 
     client =  Octokit::Client.new
@@ -33,37 +33,61 @@ class StatsBot < Sinatra::Base
 
     pull_requests = client.issues(repo.target)
 
-    number_of_pull_requests = pull_requests.count
     pull_request_creation_dates = pull_requests.map { |p| p[:created_at] }
     pull_request_ages = pull_request_creation_dates.map { |p| Time.now - p }
     label_counts = pull_requests.flat_map { |p|  p[:labels].collect {|l| l[:name] } }.group_by(&:to_s).map { |k,v| [k, v.size] }.to_h
 
-    oldest_age = pull_request_creation_dates.min
-    newest_age = pull_request_creation_dates.max
-
-    average_age = Time.now - (pull_request_ages.reduce(&:+) / pull_request_ages.size)
-    needing_attention_count = label_counts.fetch(repo.watch_label, 0)
+    statsObj = Statistics.new(
+        pull_requests.count,
+        pull_requests.flat_map { |p|  p[:labels].collect {|l| l[:name] } }.group_by(&:to_s).map { |k,v| [k, v.size] }.to_h,
+        pull_request_creation_dates.min,
+        pull_request_creation_dates.max,
+        Time.now - (pull_request_ages.reduce(&:+) / pull_request_ages.size),
+        label_counts.fetch(repo.watch_label, 0)
+    )
+    Stats.insert(:repo_id => repo.id, :source_data => pull_requests.map(&:to_h).to_json, :calculated => statsObj.to_json, :config => repo.watch_label, :trigger_type => type, :trigger_name =>  name)
 
     stats = <<-SCARY_STATS
-There are currently #{number_of_pull_requests} open pull requests in #{repo.name}.
-There are currently #{needing_attention_count} PRs with the "#{repo.watch_label}" label.
-The average age of these PRs is #{view_helper.time_ago_in_words(average_age)}.
-The oldest is #{view_helper.time_ago_in_words(oldest_age)} old.
-The newest is #{view_helper.time_ago_in_words(newest_age)} old.
+    There are currently #{statsObj.open} open pull requests.
+    There are currently #{statsObj.needy} PRs with the "#{repo.watch_label}" label.
+    The average age of these PRs is #{view_helper.time_ago_in_words(statsObj.average_age)}.
+    The oldest is #{view_helper.time_ago_in_words(statsObj.oldest)} old.
+    The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
     SCARY_STATS
+
     stats
   end
 
   get '/' do
-    repo = if params[:channel_name]
-             Repo.for_channel(params[:channel_name])
-           end
-    stats(repo)
+    type = 'web'
+
+    if params[:channel_name]
+      name = params[:channel_name]
+      repo = Repo.for_channel(name)
+    end
+    if not repo
+      repo = settings.repo
+      name = 'default'
+    end
+
+    content_type :json
+    {
+        response_type: "in_channel",
+        text:          stats(repo, type, name)
+    }.to_json
   end
 
+<<<<<<< HEAD
   post '/' do
-    repo = if params[:channel_name]
-      Repo.for_channel(params[:channel_name])
+    type = 'slack'
+
+    if params[:channel_name]
+      name = params[:channel_name]
+      repo = Repo.for_channel(name)
+      if not repo
+        repo = settings.repo
+        name = 'default'
+      end
     end
 
     debug_info = if params[:text] == "repos"
@@ -78,7 +102,7 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
     if repo && !debug_info
       {
           response_type: "in_channel",
-          text:          stats(repo)
+          text:          stats(repo, type, name)
       }.to_json
     else
       {
