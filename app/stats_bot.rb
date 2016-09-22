@@ -1,5 +1,4 @@
 require 'sinatra/base'
-require "sinatra/reloader"
 require 'octokit'
 require 'pry'
 require 'action_view'
