@@ -1,10 +1,14 @@
 require 'sequel'
-# DB.drop_table(:repos)
+Sequel.extension :migration
 
-DB.create_table(:repos) do
-  primary_key :id
-  String :target
-  String :watch_label
+Sequel.migration do
+  change do
+    create_table(:repos) do
+      primary_key :id
+      String :name
+      String :target
+      String :watch_label
+      String :channels
+    end
+  end
 end
-
-# Repo.create(target: 'locomote/cbt', watch_label: 'Review me')
