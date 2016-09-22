@@ -9,4 +9,9 @@ class Repo < Sequel::Model
     super
     validates_presence :target
   end
+
+
+  def self.for_channel(channel_name)
+    first(channels: channel_name)
+  end
 end

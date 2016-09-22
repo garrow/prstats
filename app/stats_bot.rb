@@ -11,7 +11,7 @@ Config = Struct.new(:api_token, :target_repo, :watch_label)
 class StatsBot < Sinatra::Base
   set :db, ::DB
 
-  set :repo, Repo.first
+  set(:repo) { Repo.first }
 
   set :github_api_token, ENV.fetch('GITHUB_API_TOKEN')
 
@@ -42,7 +42,7 @@ class StatsBot < Sinatra::Base
     needing_attention_count = label_counts.fetch(repo.watch_label, 0)
 
     stats = <<-SCARY_STATS
-There are currently #{number_of_pull_requests} open pull requests in #{repo.target}.
+There are currently #{number_of_pull_requests} open pull requests in #{repo.name}.
 There are currently #{needing_attention_count} PRs with the "#{repo.watch_label}" label.
 The average age of these PRs is #{view_helper.time_ago_in_words(average_age)}.
 The oldest is #{view_helper.time_ago_in_words(oldest_age)} old.
@@ -52,18 +52,28 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
   end
 
   get '/' do
+    repo = if params[:channel_name]
+             Repo.for_channel(params[:channel_name])
+           end
+    repo ||= settings.repo
+
     content_type :json
     {
         response_type: "in_channel",
-        text:          stats(settings.repo)
+        text:          stats(repo)
     }.to_json
   end
 
   post '/' do
+    repo = if params[:channel_name]
+             Repo.for_channel(params[:channel_name])
+           end
+    repo ||= settings.repo
+
     content_type :json
     {
         response_type: "in_channel",
-        text:          stats(settings.repo)
+        text:          stats(repo)
     }.to_json
   end
 end
