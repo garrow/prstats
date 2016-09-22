@@ -3,15 +3,17 @@ require 'bundler'
 require 'octokit'
 require 'pry'
 require 'action_view'
-require 'dotenv'
-Dotenv.load
+
+require_relative 'lib/boot'
+
+repo = Repo.first
 
 Config = Struct.new(:api_token, :target_repo, :watch_label)
 
 CONFIG = Config.new(
     ENV.fetch('GITHUB_API_TOKEN'),
-    ENV.fetch('GITHUB_TARGET_REPO'),
-    ENV.fetch('GITHUB_WATCH_LABEL', 'Review Requested')
+    repo.target,
+    repo.watch_label
 )
 
 puts "Run"
