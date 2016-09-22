@@ -1,3 +1,5 @@
+require 'logger'
+
 namespace :db do
   desc "Run migrations"
   task :migrate, [:version] do |t, args|
@@ -6,6 +8,7 @@ namespace :db do
     Sequel.extension :migration
     # Boot sets DB global const.
     # db = Sequel.connect(ENV.fetch("DATABASE_URL"))
+    DB.logger = Logger.new($stdout)
 
     if args[:version]
       puts "Migrating to version #{args[:version]}"

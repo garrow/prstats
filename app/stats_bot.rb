@@ -2,6 +2,7 @@ require 'sinatra/base'
 require 'octokit'
 require 'pry'
 require 'action_view'
+require 'json'
 
 require_relative '../lib/boot'
 
@@ -62,11 +63,19 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
 
   post '/' do
     repo = if params[:channel_name]
-             Repo.for_channel(params[:channel_name])
-           end
+      Repo.for_channel(params[:channel_name])
+    end
+
+    debug_info = if params[:text] == "repos"
+      ["StatsBot is configured with the following repositories"] << repos
+                 end
+
+    if ! repo && ! debug_info
+      debug_info = params.map { |k,v| "#{k} = #{v}" }
+    end
 
     content_type :json
-    if repo
+    if repo && !debug_info
       {
           response_type: "in_channel",
           text:          stats(repo)
@@ -74,8 +83,12 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
     else
       {
           response_type: "ephemeral",
-          text:          params.map { |k,v| "#{k} = #{v}\n" }.join
+          text:          debug_info.join("\n")
       }.to_json
     end
+  end
+
+  def repos
+    Repo.all.map {|r| %Q[#{r.name} at #{r.target} in channel: #{r.channels} watching label: "#{r.watch_label}"] }
   end
 end
