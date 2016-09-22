@@ -42,7 +42,7 @@ needing_attention_count = label_counts.fetch(CONFIG.watch_label, 0)
 
 include ActionView::Helpers::DateHelper
 stats = <<-SCARY_STATS
-There are currently #{number_of_pull_requests} open pull requests.
+There are currently #{number_of_pull_requests} open pull requests in #{CONFIG.target_repo}.
 There are currently #{needing_attention_count} PRs with the "#{CONFIG.watch_label}" label.
 The average age of these PRs is #{time_ago_in_words(average_age)}.
 The oldest is #{time_ago_in_words(oldest_age)} old.

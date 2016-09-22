@@ -12,8 +12,7 @@ class StatsBot < Sinatra::Base
   set :db, ::DB
 
   set :repo, Repo.first
-  set :target_repo, settings.repo.target
-  set :watch_label, settings.repo.watch_label
+
   set :github_api_token, ENV.fetch('GITHUB_API_TOKEN')
 
   Octokit.configure do |c|
@@ -24,12 +23,12 @@ class StatsBot < Sinatra::Base
     include ActionView::Helpers::DateHelper
   end
 
-  def stats
+  def stats(repo)
     client =  Octokit::Client.new
     #text = params.fetch('text', )
     view_helper = ViewHelper.new
-    pull_requests = client.issues(settings.target_repo)
 
+    pull_requests = client.issues(repo.target)
 
     number_of_pull_requests = pull_requests.count
     pull_request_creation_dates = pull_requests.map { |p| p[:created_at] }
@@ -40,11 +39,11 @@ class StatsBot < Sinatra::Base
     newest_age = pull_request_creation_dates.max
 
     average_age = Time.now - (pull_request_ages.reduce(&:+) / pull_request_ages.size)
-    needing_attention_count = label_counts.fetch(settings.watch_label, 0)
+    needing_attention_count = label_counts.fetch(repo.watch_label, 0)
 
     stats = <<-SCARY_STATS
-There are currently #{number_of_pull_requests} open pull requests.
-There are currently #{needing_attention_count} PRs with the "#{settings.watch_label}" label.
+There are currently #{number_of_pull_requests} open pull requests in #{repo.target}.
+There are currently #{needing_attention_count} PRs with the "#{repo.watch_label}" label.
 The average age of these PRs is #{view_helper.time_ago_in_words(average_age)}.
 The oldest is #{view_helper.time_ago_in_words(oldest_age)} old.
 The newest is #{view_helper.time_ago_in_words(newest_age)} old.
@@ -56,7 +55,7 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
     content_type :json
     {
         response_type: "in_channel",
-        text:          stats
+        text:          stats(settings.repo)
     }.to_json
   end
 
@@ -64,7 +63,7 @@ The newest is #{view_helper.time_ago_in_words(newest_age)} old.
     content_type :json
     {
         response_type: "in_channel",
-        text:          stats
+        text:          stats(settings.repo)
     }.to_json
   end
 end
