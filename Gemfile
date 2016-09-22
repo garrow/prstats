@@ -8,3 +8,5 @@ gem 'dotenv'
 gem 'pry'
 gem 'actionview'
 gem "octokit", "~> 4.0"
+gem "pg"
+gem "sequel"
