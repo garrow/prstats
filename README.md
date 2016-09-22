@@ -31,3 +31,18 @@ It needs to be in 'owner/repository' format e.g.
 GITHUB_WATCH_LABEL
 ```
 A label which marks your outstanding pull requests, e.g. 'Needs Review'"
+
+## Authentication
+
+
+You can use a personal access token from
+https://github.com/settings/tokens
+Create a token, and give it access to the following scopes
+
+- `repo`
+- `repo:status`
+    - `repo_deployment`
+    - `public_repo`
+- `admin:repo_hook`
+    - `write:repo_hook`
+    - `read:repo_hook`
