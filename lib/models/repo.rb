@@ -11,7 +11,7 @@ class Repo < Sequel::Model
   end
 
 
-  def self.for_channel(channel_name)
-    first(channels: channel_name)
+  def self.for_channel(channel_names)
+    first(channels: channel_names)
   end
 end

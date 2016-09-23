@@ -114,25 +114,52 @@ class StatsBot < Sinatra::Base
     end
 
     debug_info = if params[:text] == "info"
-      ["StatsBot is configured with the following repositories"] << repos
+                   RepoListMessage.new.message
                  end
 
     if ! repo && ! debug_info
-      debug_info = params.map { |k,v| "#{k} = #{v}" }
+      debug_info = {
+          response_type: "ephemeral",
+          text:          params.map { |k,v| "#{k} = #{v}" }.join("\n")
+      }
     end
 
     content_type :json
     if repo && !debug_info
       stats_message(repo, type, name).to_json
     else
-      {
-          response_type: "ephemeral",
-          text:          debug_info.join("\n")
-      }.to_json
+      debug_info.to_json
     end
   end
 
+end
+
+class RepoListMessage
   def repos
-    Repo.all.map {|r| %Q[#{r.name} at #{r.target} in channel: #{r.channels} watching label: "#{r.watch_label}"] }
+    Repo.all
+  end
+
+  def message
+    {
+        response_type: "ephemeral",
+        # response_type: "in_channel",
+        text:          "StatsBot is configured with the following repositories",
+        attachments: attachments
+    }
+  end
+
+  def attachments
+    #https://api.slack.com/docs/message-attachments
+    repos.map do |repo|
+      {
+          title: "#{repo.name} <https://github.com/#{repo.target}|#{repo.target}>",
+          fields: [
+
+                      {title: 'Channels', value: "\##{repo.channels}", short: true},
+                      {title: 'Watch Label', value: repo.watch_label, short: true},
+                  ]
+      }
+      # %Q[#{repo.name} at #{repo.target} in channel: #{repo.channels} watching label: "#{repo.watch_label}"]
+    end
   end
 end
