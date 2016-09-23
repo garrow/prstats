@@ -61,11 +61,11 @@ class StatsBot < Sinatra::Base
     )
 
     stats = <<-SCARY_STATS
-    There are currently #{statsObj.open} open pull requests in #{repo.name} <https://github.com/#{repo.target}/pulls|#{repo.target}>.
-    There are currently #{statsObj.needy} PRs with the "#{repo.watch_label}" label.
-    The average age of these PRs is #{view_helper.time_ago_in_words(statsObj.average_age)}.
-    The oldest is #{view_helper.time_ago_in_words(statsObj.oldest)} old.
-    The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
+There are currently #{statsObj.open} open pull requests in #{repo.name} <https://github.com/#{repo.target}/pulls|#{repo.target}>.
+There are currently #{statsObj.needy} PRs with the "#{repo.watch_label}" label.
+The average age of these PRs is #{view_helper.time_ago_in_words(statsObj.average_age)}.
+The oldest is #{view_helper.time_ago_in_words(statsObj.oldest)} old.
+The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
     SCARY_STATS
 
     all_ages_in_days = pull_request_creation_dates.map do |cd|
@@ -85,16 +85,16 @@ class StatsBot < Sinatra::Base
     # Response
     {
         response_type: "in_channel",
-        text:          stats,
+        text: stats,
         attachments:   [
                            {
                             color:     "#F35A00",
-                            title:     "Ages of all PRs",
+                            title:     "Ages of all PRs in Days",
                             image_url: bar_chart_url(all_ages_in_days, all_ages_in_days)
                         },
                         {
                              color: "#000000",
-                             title:     "Age in Weeks",
+                             title:     "Grouped by Age in Weeks",
                              image_url: weeks_url_bar
                          }
                        ]
@@ -120,7 +120,17 @@ class StatsBot < Sinatra::Base
   post '/' do
     type = 'slack'
 
-    if params[:channel_name]
+    # Lol Shitstorm
+    if params[:text]
+      name = params[:text]
+      repo = Repo.for_channel(name)
+
+      if !repo
+        repo = Repo.for_name(name)
+      end
+    end
+
+    if !repo && params[:channel_name]
       name = params[:channel_name]
       repo = Repo.for_channel(name)
       unless repo

@@ -14,4 +14,8 @@ class Repo < Sequel::Model
   def self.for_channel(channel_names)
     first(channels: channel_names)
   end
+
+  def self.for_name(name)
+    first(Sequel.expr(:name).ilike(name))
+  end
 end
