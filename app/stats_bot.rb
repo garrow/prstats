@@ -82,6 +82,24 @@ The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
 
     weeks_url_bar = bar_chart_url(all_ages_in_weeks.values, all_ages_in_weeks.keys)
 
+
+    all_history = Stats.history(repo)
+
+    all_pending = all_history.collect {  |res| res[:needy]  }
+    all_open = all_history.collect {  |res| res[:open_prs]  }
+
+    # binding.pry
+
+
+    max_prs = all_open.max
+
+
+    history_url = "https://chart.googleapis.com/chart?chxr=0,0,#{max_prs},1&chds=0,#{max_prs}&chxt=y&cht=lc&chs=400x100&chd=t:#{all_pending.join(',')}%7C#{all_open.join(',')}&chco=FF0000,0000FF"
+
+
+
+
+
     # Response
     {
         response_type: "in_channel",
@@ -96,7 +114,12 @@ The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
                              color: "#000000",
                              title:     "Grouped by Age in Weeks",
                              image_url: weeks_url_bar
-                         }
+                         },
+                           {
+                               color: "#F35A00",
+                               title: "history of open vs. pending",
+                               image_url: history_url
+                           }
                        ]
     }
   end
