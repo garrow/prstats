@@ -89,11 +89,11 @@ class StatsBot < Sinatra::Base
         response_type: "in_channel",
         text:          stats,
         attachments:   [
-                        #    {
-                        #     color: "#F35A00",
-                        #     title:     "Ages of all PRs",
-                        #     image_url: days_url
-                        # },
+                           {
+                            color: "#F35A00",
+                            title:     "Ages of all PRs",
+                            image_url: days_url
+                        },
                         {
                              color: "#000000",
                              title:     "Age in Weeks",
