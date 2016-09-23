@@ -77,27 +77,25 @@ class StatsBot < Sinatra::Base
       TimeDifference.between(cd, DateTime.now).in_weeks.ceil
     end.sort.group_by(&:itself).map {|label, values| ["#{label}w", values.count] }.to_h
 
-    days_url = "https://chart.googleapis.com/chart?&chbh=10&cht=bvg&chs=400x75&chd=t:#{all_ages_in_days.join(',')}&chl=#{all_ages_in_days.join('|')}"
+    max_weeks_value = all_ages_in_weeks.values.max
+    weeks_url_pie = "https://chart.googleapis.com/chart?&chxr=#{max_weeks_value}&cht=p3&chs=400x100&chd=t:#{all_ages_in_weeks.values.join(',')}&chl=#{all_ages_in_weeks.keys.join('|')}"
 
-    max_value = all_ages_in_weeks.values.max
+    weeks_url_bar = bar_chart_url(all_ages_in_weeks.values, all_ages_in_weeks.keys)
 
-    weeks_url = "https://chart.googleapis.com/chart?&chxr=#{max_value}&cht=p3&chs=400x100&chd=t:#{all_ages_in_weeks.values.join(',')}&chl=#{all_ages_in_weeks.keys.join('|')}"
-
-
-
+    # Response
     {
         response_type: "in_channel",
         text:          stats,
         attachments:   [
                            {
-                            color: "#F35A00",
+                            color:     "#F35A00",
                             title:     "Ages of all PRs",
-                            image_url: days_url
+                            image_url: bar_chart_url(all_ages_in_days, all_ages_in_days)
                         },
                         {
                              color: "#000000",
                              title:     "Age in Weeks",
-                             image_url: weeks_url
+                             image_url: weeks_url_bar
                          }
                        ]
     }
@@ -148,6 +146,21 @@ class StatsBot < Sinatra::Base
     else
       debug_info.to_json
     end
+  end
+
+
+  # TODO - Refactor
+
+  def bar_chart_url(values, labels)
+    # days_url = "https://chart.googleapis.com/chart?&chbh=10&cht=bvg&chs=400x75&chd=t:#{all_ages_in_days.join(',')}&chl=#{all_ages_in_days.join('|')}"
+    # weeks_url_bar = "https://chart.googleapis.com/chart?&chxt=x,y&chxr=1,0,#{max_weeks_value},1&chbh=a&cht=bvg&chds=0,#{max_weeks_value}&chs=400x100&chd=t:#{all_ages_in_weeks.values.join(',')}&chl=#{all_ages_in_weeks.keys.join('|')}"
+
+    #&chxr=1,0,#{max_value},1
+    #&chxr=1,0,#{max_value}
+
+    max_value = values.max
+
+    "https://chart.googleapis.com/chart?&chxr=1,0,#{max_value}&chxt=x,y&chbh=a&cht=bvg&chds=0,#{max_value}&chs=400x100&chd=t:#{values.join(',')}&chl=#{labels.join('|')}"
   end
 
 end
