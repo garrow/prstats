@@ -4,6 +4,7 @@ require 'pry'
 require 'action_view'
 require 'json'
 require 'sinatra/reloader'
+require 'time_difference'
 
 require_relative '../lib/boot'
 
@@ -29,7 +30,7 @@ class StatsBot < Sinatra::Base
     include ActionView::Helpers::DateHelper
   end
 
-  def stats(repo, type, name)
+  def stats_message(repo, type, name)
     return "Error: No repository defined" unless repo
 
     client =  Octokit::Client.new
@@ -60,14 +61,28 @@ class StatsBot < Sinatra::Base
     )
 
     stats = <<-SCARY_STATS
-    There are currently #{statsObj.open} open pull requests.
+    There are currently #{statsObj.open} open pull requests in #{repo.name}.
     There are currently #{statsObj.needy} PRs with the "#{repo.watch_label}" label.
     The average age of these PRs is #{view_helper.time_ago_in_words(statsObj.average_age)}.
     The oldest is #{view_helper.time_ago_in_words(statsObj.oldest)} old.
     The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
     SCARY_STATS
 
-    stats
+    all_ages_in_days = pull_request_creation_dates.map do |cd|
+      TimeDifference.between(cd, DateTime.now).in_days.to_i
+    end.sort
+
+    image_url = "https://chart.googleapis.com/chart?&chbh=10&cht=bvg&chs=400x75&chd=t:#{all_ages_in_days.join(',')}&chl=#{all_ages_in_days.join('|')}"
+
+    {
+        response_type: "in_channel",
+        text:          stats,
+        attachments:   [{
+                            color: "#F35A00",
+                            title:     "Ages of all PRs",
+                            image_url: image_url
+                        }]
+    }
   end
 
   get '/' do
@@ -77,16 +92,13 @@ class StatsBot < Sinatra::Base
       name = params[:channel_name]
       repo = Repo.for_channel(name)
     end
-    if not repo
+    unless repo
       repo = settings.repo
       name = 'default'
     end
 
     content_type :json
-    {
-        response_type: "in_channel",
-        text:          stats(repo, type, name)
-    }.to_json
+    stats_message(repo, type, name).to_json
   end
 
   post '/' do
@@ -95,7 +107,7 @@ class StatsBot < Sinatra::Base
     if params[:channel_name]
       name = params[:channel_name]
       repo = Repo.for_channel(name)
-      if not repo
+      unless repo
         repo = settings.repo
         name = 'default'
       end
@@ -111,10 +123,7 @@ class StatsBot < Sinatra::Base
 
     content_type :json
     if repo && !debug_info
-      {
-          response_type: "in_channel",
-          text:          stats(repo, type, name)
-      }.to_json
+      stats_message(repo, type, name).to_json
     else
       {
           response_type: "ephemeral",
