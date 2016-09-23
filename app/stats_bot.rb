@@ -50,7 +50,14 @@ class StatsBot < Sinatra::Base
         Time.now - (pull_request_ages.reduce(&:+) / pull_request_ages.size),
         label_counts.fetch(repo.watch_label, 0)
     )
-    Stats.insert(:repo_id => repo.id, :source_data => pull_requests.map(&:to_h).to_json, :calculated => statsObj.to_json, :config => repo.watch_label, :trigger_type => type, :trigger_name =>  name)
+    Stats.insert(
+        :repo_id => repo.id,
+        :source_data => pull_requests.map(&:to_h).to_json,
+        :calculated => statsObj.to_h.to_json,
+        :config => repo.watch_label,
+        :trigger_type => type,
+        :trigger_name =>  name
+    )
 
     stats = <<-SCARY_STATS
     There are currently #{statsObj.open} open pull requests.
