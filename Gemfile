@@ -4,6 +4,7 @@ source "https://rubygems.org"
 ruby "2.3.1"
 
 gem 'sinatra'
+gem 'sinatra-contrib'
 gem 'dotenv'
 gem 'actionview'
 gem "octokit", "~> 4.0"

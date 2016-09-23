@@ -3,6 +3,7 @@ require 'octokit'
 require 'pry'
 require 'action_view'
 require 'json'
+require 'sinatra/reloader'
 
 require_relative '../lib/boot'
 
@@ -10,6 +11,10 @@ Config = Struct.new(:api_token, :target_repo, :watch_label)
 Statistics = Struct.new(:open, :counts, :oldest, :newest, :average_age, :needy)
 
 class StatsBot < Sinatra::Base
+  configure :development do
+    register Sinatra::Reloader
+  end
+
   set :db, ::DB
 
   set(:repo) { Repo.first }
