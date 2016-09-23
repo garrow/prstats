@@ -77,7 +77,6 @@ class StatsBot < Sinatra::Base
     }.to_json
   end
 
-<<<<<<< HEAD
   post '/' do
     type = 'slack'
 
