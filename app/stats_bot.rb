@@ -61,7 +61,7 @@ class StatsBot < Sinatra::Base
     )
 
     stats = <<-SCARY_STATS
-    There are currently #{statsObj.open} open pull requests in #{repo.name}.
+    There are currently #{statsObj.open} open pull requests in #{repo.name} <https://github.com/#{repo.target}/pulls|#{repo.target}>.
     There are currently #{statsObj.needy} PRs with the "#{repo.watch_label}" label.
     The average age of these PRs is #{view_helper.time_ago_in_words(statsObj.average_age)}.
     The oldest is #{view_helper.time_ago_in_words(statsObj.oldest)} old.
@@ -72,16 +72,34 @@ class StatsBot < Sinatra::Base
       TimeDifference.between(cd, DateTime.now).in_days.to_i
     end.sort
 
-    image_url = "https://chart.googleapis.com/chart?&chbh=10&cht=bvg&chs=400x75&chd=t:#{all_ages_in_days.join(',')}&chl=#{all_ages_in_days.join('|')}"
+
+    all_ages_in_weeks = pull_request_creation_dates.map do |cd|
+      TimeDifference.between(cd, DateTime.now).in_weeks.ceil
+    end.sort.group_by(&:itself).map {|label, values| ["#{label}w", values.count] }.to_h
+
+    days_url = "https://chart.googleapis.com/chart?&chbh=10&cht=bvg&chs=400x75&chd=t:#{all_ages_in_days.join(',')}&chl=#{all_ages_in_days.join('|')}"
+
+    max_value = all_ages_in_weeks.values.max
+
+    weeks_url = "https://chart.googleapis.com/chart?&chxr=#{max_value}&cht=p3&chs=400x100&chd=t:#{all_ages_in_weeks.values.join(',')}&chl=#{all_ages_in_weeks.keys.join('|')}"
+
+
 
     {
         response_type: "in_channel",
         text:          stats,
-        attachments:   [{
-                            color: "#F35A00",
-                            title:     "Ages of all PRs",
-                            image_url: image_url
-                        }]
+        attachments:   [
+                        #    {
+                        #     color: "#F35A00",
+                        #     title:     "Ages of all PRs",
+                        #     image_url: days_url
+                        # },
+                        {
+                             color: "#000000",
+                             title:     "Age in Weeks",
+                             image_url: weeks_url
+                         }
+                       ]
     }
   end
 
