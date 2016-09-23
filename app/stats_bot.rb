@@ -101,7 +101,7 @@ class StatsBot < Sinatra::Base
       end
     end
 
-    debug_info = if params[:text] == "repos"
+    debug_info = if params[:text] == "info"
       ["StatsBot is configured with the following repositories"] << repos
                  end
 
