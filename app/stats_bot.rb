@@ -155,6 +155,10 @@ The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
 
     if !repo && params[:channel_name]
       name = params[:channel_name]
+
+      if name == "privategroup"
+        name = params[:channel_id]
+      end
       repo = Repo.for_channel(name)
       # unless repo
       #   repo = settings.repo
