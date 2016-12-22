@@ -37,7 +37,7 @@ class StatsBot < Sinatra::Base
     #text = params.fetch('text', )
     view_helper = ViewHelper.new
 
-    pull_requests = client.issues(repo.target)
+    pull_requests = client.issues(repo.target).select { |issue| issue.key? :pull_request }
 
     pull_request_creation_dates = pull_requests.map { |p| p[:created_at] }
     pull_request_ages = pull_request_creation_dates.map { |p| Time.now - p }
@@ -88,17 +88,9 @@ The newest is #{view_helper.time_ago_in_words(statsObj.newest)} old.
     all_pending = all_history.collect {  |res| res[:needy]  }
     all_open = all_history.collect {  |res| res[:open_prs]  }
 
-    # binding.pry
-
-
     max_prs = all_open.max
 
-
     history_url = "https://chart.googleapis.com/chart?chxr=0,0,#{max_prs},1&chds=0,#{max_prs}&chxt=y&cht=lc&chs=400x100&chd=t:#{all_pending.join(',')}%7C#{all_open.join(',')}&chco=FF0000,0000FF"
-
-
-
-
 
     # Response
     {
