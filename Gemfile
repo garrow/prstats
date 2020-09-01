@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 source "https://rubygems.org"
 
-ruby "2.3.1"
+# https://devcenter.heroku.com/articles/ruby-support#ruby-versions
+ruby "2.6.6" # Default Heroku version
 
 gem 'sinatra'
 gem 'sinatra-contrib'
